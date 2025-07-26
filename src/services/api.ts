@@ -1,4 +1,26 @@
-import type { DashboardStats, Level, Material, User, Vocabulary } from "../types"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { DashboardStats, Level, Material, User } from "../types"
+import axios from 'axios';
+import { supabase } from '../lib/supabaseClient'; // Asumsi client Supabase Anda ada di sini
+
+const apiClient = axios.create({
+    baseURL: 'https://backend-arabicara.up.railway.app/api/v1', // Base URL dari API Anda
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Interceptor untuk menambahkan token otentikasi ke setiap permintaan
+apiClient.interceptors.request.use(
+    async (config) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+            config.headers.Authorization = `Bearer ${session.access_token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
 
 // Mock data
 const MOCK_USER: User = {
@@ -7,33 +29,6 @@ const MOCK_USER: User = {
     name: "Admin User",
     role: "admin",
 }
-
-const MOCK_VOCABULARY: Vocabulary[] = [
-    {
-        id: "1",
-        arabicText: "مرحبا",
-        indonesianText: "Halo",
-        category: "Greetings",
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-    {
-        id: "2",
-        arabicText: "شكرا",
-        indonesianText: "Terima kasih",
-        category: "Greetings",
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-    {
-        id: "3",
-        arabicText: "كتاب",
-        indonesianText: "Buku",
-        category: "Objects",
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-]
 
 const MOCK_LEVELS: Level[] = [
     {
@@ -92,39 +87,30 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     return MOCK_STATS
 }
 
-export const getVocabulary = async (): Promise<Vocabulary[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return MOCK_VOCABULARY
-}
+// GET /vocabularies
+export const getVocabulary = async () => {
+    const response = await apiClient.get('/vocabularies');
+    console.log(response.data);
 
-export const createVocabulary = async (
-    data: Omit<Vocabulary, "id" | "createdAt" | "updatedAt">,
-): Promise<Vocabulary> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const newVocab: Vocabulary = {
-        ...data,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }
-    return newVocab
-}
+    return response.data; // Sesuaikan dengan struktur respons API Anda
+};
 
-export const updateVocabulary = async (id: string, data: Partial<Vocabulary>): Promise<Vocabulary> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    const existing = MOCK_VOCABULARY.find((v) => v.id === id)
-    if (!existing) throw new Error("Vocabulary not found")
+// POST /vocabularies
+export const createVocabulary = async (data: any) => {
+    const response = await apiClient.post('/vocabularies', data);
+    return response.data.data;
+};
 
-    return {
-        ...existing,
-        ...data,
-        updatedAt: new Date().toISOString(),
-    }
-}
+// PUT /vocabularies/{id}
+export const updateVocabulary = async (id: number, data: any) => {
+    const response = await apiClient.put(`/vocabularies/${id}`, data);
+    return response.data.data;
+};
 
-export const deleteVocabulary = async (): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-}
+// DELETE /vocabularies/{id}
+export const deleteVocabulary = async (id: number) => {
+    await apiClient.delete(`/vocabularies/${id}`);
+};
 
 export const getLevels = async (): Promise<Level[]> => {
     await new Promise((resolve) => setTimeout(resolve, 500))

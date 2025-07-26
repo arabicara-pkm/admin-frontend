@@ -6,14 +6,21 @@ export interface User {
 }
 
 export interface Vocabulary {
-    id: string
+    id: number
     arabicText: string
     indonesianText: string
-    category: string
+    category: Category
     arabicAudio?: string
     indonesianAudio?: string
     createdAt: string
     updatedAt: string
+}
+
+export interface Category {
+    id: number;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Level {

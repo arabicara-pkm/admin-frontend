@@ -1,7 +1,15 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  getVocabulary,
+  createVocabulary,
+  updateVocabulary,
+  deleteVocabulary,
+} from "../services/api";
+import type { Vocabulary } from "../types";
+
+// Import komponen UI dari shadcn/ui
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import {
@@ -11,12 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/Select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/Card";
+import { Card, CardContent } from "../components/ui/Card";
 import {
   Table,
   TableBody,
@@ -25,17 +28,28 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/Table";
-import { Alert, AlertDescription } from "../components/ui/Alert";
+import { Badge } from "../components/ui/badge"; // Komponen baru untuk kategori
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { VocabularyModal } from "../components/VocabularyModal";
 import {
-  getVocabulary,
-  createVocabulary,
-  updateVocabulary,
-  deleteVocabulary,
-} from "../services/api";
-import type { Vocabulary } from "../types";
-import { Plus, Search, Edit, Trash2, Filter } from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog"; // Komponen baru untuk konfirmasi
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip"; // Komponen baru untuk hint
+
+// Import Ikon
+import { Plus, Search, Edit, Trash2, BookText } from "lucide-react";
 
 export const VocabularyPage: React.FC = () => {
   const [vocabulary, setVocabulary] = useState<Vocabulary[]>([]);
@@ -43,16 +57,25 @@ export const VocabularyPage: React.FC = () => {
     []
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // State untuk filter dan pencarian
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  // State untuk Modal (Add/Edit)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [
     selectedVocabulary,
     setSelectedVocabulary,
   ] = useState<Vocabulary | null>(null);
-  const [error, setError] = useState("");
 
+  // State untuk Dialog Konfirmasi Hapus
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [vocabToDelete, setVocabToDelete] = useState<Vocabulary | null>(null);
+
+  // Daftar kategori (bisa juga diambil dari API jika dinamis)
   const categories = [
     "all",
     "Greetings",
@@ -66,13 +89,28 @@ export const VocabularyPage: React.FC = () => {
     "Adjectives",
   ];
 
-  useEffect(() => {
-    fetchVocabulary();
+  const fetchVocabulary = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getVocabulary();
+      setVocabulary(data || []);
+    } catch (err) {
+      setError("Failed to fetch vocabulary data. Please try again.");
+      console.error(err);
+      setVocabulary([]); // Juga atur ke array kosong jika terjadi error
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const filterVocabulary = useCallback(() => {
-    let filtered = vocabulary;
+  useEffect(() => {
+    fetchVocabulary();
+  }, [fetchVocabulary]);
 
+  // Logika filter di sisi klien
+  useEffect(() => {
+    let filtered = vocabulary;
     if (searchTerm) {
       filtered = filtered.filter(
         (item) =>
@@ -80,148 +118,127 @@ export const VocabularyPage: React.FC = () => {
           item.indonesianText.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
     if (selectedCategory !== "all") {
-      filtered = filtered.filter((item) => item.category === selectedCategory);
+      filtered = filtered.filter(
+        (item) => item.category.name === selectedCategory
+      );
     }
-
     setFilteredVocabulary(filtered);
   }, [vocabulary, searchTerm, selectedCategory]);
 
-  useEffect(() => {
-    filterVocabulary();
-  }, [filterVocabulary]);
-
-  const fetchVocabulary = async () => {
-    try {
-      const data = await getVocabulary();
-      setVocabulary(data);
-    } catch {
-      setError("Failed to fetch vocabulary");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAddVocabulary = () => {
+  const handleAdd = () => {
     setModalMode("add");
     setSelectedVocabulary(null);
     setIsModalOpen(true);
   };
 
-  const handleEditVocabulary = (vocab: Vocabulary) => {
+  const handleEdit = (vocab: Vocabulary) => {
     setModalMode("edit");
     setSelectedVocabulary(vocab);
     setIsModalOpen(true);
   };
 
-  const handleDeleteVocabulary = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this vocabulary?")) {
-      try {
-        await deleteVocabulary();
-        setVocabulary(vocabulary.filter((item) => item.id !== id));
-      } catch {
-        setError("Failed to delete vocabulary");
-      }
-    }
-  };
-
-  const handleSaveVocabulary = async (
+  const handleSave = async (
     data: Omit<Vocabulary, "id" | "createdAt" | "updatedAt">
   ) => {
     try {
       if (modalMode === "add") {
-        const newVocab = await createVocabulary(data);
-        setVocabulary([...vocabulary, newVocab]);
+        await createVocabulary(data);
       } else if (selectedVocabulary) {
-        const updatedVocab = await updateVocabulary(
-          selectedVocabulary.id,
-          data
-        );
-        setVocabulary(
-          vocabulary.map((item) =>
-            item.id === selectedVocabulary.id ? updatedVocab : item
-          )
-        );
+        await updateVocabulary(selectedVocabulary.id, data);
       }
-    } catch {
+      setIsModalOpen(false);
+      await fetchVocabulary(); // Muat ulang data setelah berhasil menyimpan
+    } catch (err) {
+      console.error("Failed to save vocabulary:", err);
+      // Anda bisa menampilkan pesan error di dalam modal
       throw new Error("Failed to save vocabulary");
+    }
+  };
+
+  const openDeleteDialog = (vocab: Vocabulary) => {
+    setVocabToDelete(vocab);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!vocabToDelete) return;
+    try {
+      await deleteVocabulary(vocabToDelete.id);
+      setVocabToDelete(null);
+      await fetchVocabulary(); // Muat ulang data setelah berhasil menghapus
+    } catch (err) {
+      setError("Failed to delete vocabulary.");
+      console.error(err);
+    } finally {
+      setIsDeleteDialogOpen(false);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-full w-full items-center justify-center p-16">
         <LoadingSpinner />
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex h-full w-full items-center justify-center p-16 text-red-600">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header Halaman */}
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Vocabulary Management
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Manage Arabic vocabulary words and their translations
+          <h1 className="text-3xl font-bold tracking-tight">Vocabulary</h1>
+          <p className="mt-1 text-gray-600">
+            Manage Arabic vocabulary words and their translations.
           </p>
         </div>
-        <Button
-          onClick={handleAddVocabulary}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add New Word
+        <Button onClick={handleAdd} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" /> Add New Word
         </Button>
       </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {/* Kontrol Filter dan Pencarian */}
+      <div className="flex flex-col items-stretch gap-4 md:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Input
+            placeholder="Search by Arabic or Indonesian text..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 pl-10"
+          />
+        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-full md:w-[200px] h-10">
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category === "all" ? "All Categories" : category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
+      {/* Tabel Data */}
       <Card>
-        <CardHeader>
-          <CardTitle>Vocabulary List</CardTitle>
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search vocabulary..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category === "all" ? "All Categories" : category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">Arabic Text</TableHead>
+                  <TableHead className="w-[200px]">Arabic Text</TableHead>
                   <TableHead>Indonesian Text</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Created</TableHead>
@@ -229,53 +246,71 @@ export const VocabularyPage: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredVocabulary.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="text-center py-8 text-gray-500"
-                    >
-                      {searchTerm || selectedCategory !== "all"
-                        ? "No vocabulary found matching your criteria"
-                        : "No vocabulary added yet"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
+                {filteredVocabulary.length > 0 ? (
                   filteredVocabulary.map((vocab) => (
                     <TableRow key={vocab.id}>
-                      <TableCell className="font-medium text-right" dir="rtl">
+                      <TableCell className="font-medium" dir="rtl">
                         {vocab.arabicText}
                       </TableCell>
                       <TableCell>{vocab.indonesianText}</TableCell>
                       <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {vocab.category}
-                        </span>
+                        <Badge variant="outline">{vocab.category.name}</Badge>
                       </TableCell>
                       <TableCell className="text-gray-500">
                         {new Date(vocab.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell>
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditVocabulary(vocab)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteVocabulary(vocab.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(vocab)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => openDeleteDialog(vocab)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Delete</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </div>
                       </TableCell>
                     </TableRow>
                   ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-48 text-center text-gray-500"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <BookText className="h-10 w-10 text-gray-400" />
+                        <p className="font-medium">No Vocabulary Found</p>
+                        <p className="text-sm">
+                          Try adjusting your search or filter.
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -283,13 +318,39 @@ export const VocabularyPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      <VocabularyModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveVocabulary}
-        vocabulary={selectedVocabulary}
-        mode={modalMode}
-      />
+      {/* Modal untuk Add/Edit */}
+      {isModalOpen && (
+        <VocabularyModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSave}
+          vocabulary={selectedVocabulary}
+          mode={modalMode}
+        />
+      )}
+
+      {/* Dialog untuk Konfirmasi Hapus */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              vocabulary word
+              <span className="font-bold"> "{vocabToDelete?.arabicText}"</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
