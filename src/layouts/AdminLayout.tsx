@@ -100,11 +100,11 @@ export const AdminLayout: React.FC = () => {
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
               <span className="text-white text-sm font-medium">
-                {user?.name?.charAt(0) || "A"}
+                {user?.user_metadata.name?.charAt(0) || "A"}
               </span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">{user?.name}</p>
+              <p className="text-sm font-medium text-gray-900">{user?.user_metadata.name}</p>
               <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
           </div>
