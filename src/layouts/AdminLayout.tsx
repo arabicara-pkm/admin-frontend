@@ -19,7 +19,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Categories", href: "/categories", icon: Tags },
   { name: "Vocabulary", href: "/vocabulary", icon: BookOpen },
-  { name: "Levels & Materials", href: "/levels", icon: GraduationCap },
+  { name: "Levels & Lessons", href: "/levels", icon: GraduationCap },
 ];
 
 export const AdminLayout: React.FC = () => {

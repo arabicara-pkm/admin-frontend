@@ -24,24 +24,22 @@ export interface Category {
 }
 
 export interface Level {
-    id: string
-    levelName: string
+    id: number
+    name: string
     description: string
-    order: number
+    sequence: number
     createdAt: string
     updatedAt: string
 }
 
-export interface Material {
-    id: string
-    levelId: string
-    title: string
-    content: string
-    type: "lesson" | "exercise" | "quiz"
-    order: number
-    exercises: Exercise[]
-    createdAt: string
-    updatedAt: string
+export interface Lesson {
+    id: number;
+    title: string;
+    content: string;
+    sequence: number;
+    levelId: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Exercise {

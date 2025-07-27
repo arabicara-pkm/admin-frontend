@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { DashboardStats, Level, Material } from "../types"
+import type { DashboardStats } from "../types"
 import axios from 'axios';
 import { supabase } from '../lib/supabaseClient'; // Asumsi client Supabase Anda ada di sini
 
@@ -21,39 +21,6 @@ apiClient.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
-
-const MOCK_LEVELS: Level[] = [
-    {
-        id: "1",
-        levelName: "Beginner",
-        description: "Basic Arabic for beginners",
-        order: 1,
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-    {
-        id: "2",
-        levelName: "Intermediate",
-        description: "Intermediate Arabic concepts",
-        order: 2,
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-]
-
-const MOCK_MATERIALS: Material[] = [
-    {
-        id: "1",
-        levelId: "1",
-        title: "Basic Greetings",
-        content: "Learn basic Arabic greetings",
-        type: "lesson",
-        order: 1,
-        exercises: [],
-        createdAt: "2024-01-01",
-        updatedAt: "2024-01-01",
-    },
-]
 
 const MOCK_STATS: DashboardStats = {
     totalUsers: 150,
@@ -109,32 +76,49 @@ export const deleteVocabulary = async (id: number) => {
     await apiClient.delete(`/vocabularies/${id}`);
 };
 
-export const getLevels = async (): Promise<Level[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return MOCK_LEVELS
-}
+// levels
+export const getLevels = async () => {
+    const response = await apiClient.get('/levels');
+    return response.data.data;
+};
 
-export const getMaterialsByLevel = async (levelId: string): Promise<Material[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return MOCK_MATERIALS.filter((m) => m.levelId === levelId)
-}
+export const createLevel = async (data: any) => {
+    const response = await apiClient.post('/levels', data);
+    return response.data;
+};
 
-export const createLevel = async (data: Omit<Level, "id" | "createdAt" | "updatedAt">): Promise<Level> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return {
-        ...data,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }
-}
+export const updateLevel = async (id: number, data: any) => {
+    const response = await apiClient.put(`/levels/${id}`, data);
+    return response.data;
+};
 
-export const createMaterial = async (data: Omit<Material, "id" | "createdAt" | "updatedAt">): Promise<Material> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return {
-        ...data,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-    }
-}
+export const deleteLevel = async (id: number) => {
+    await apiClient.delete(`/levels/${id}`);
+};
+
+
+// lessons
+export const getLessonsByLevel = async (levelId: number) => {
+    const response = await apiClient.get(`/levels/${levelId}`, {
+        params: {
+            include: 'lessons'
+        }
+    });
+
+    return response.data.data.lessons || [];
+};
+
+export const createLesson = async (data: any) => {
+    const response = await apiClient.post('/lessons', data);
+    return response.data.data;
+};
+
+export const updateLesson = async (id: number, data: any) => {
+    const response = await apiClient.put(`/lessons/${id}`, data);
+    return response.data.data;
+};
+
+export const deleteLesson = async (id: number) => {
+    await apiClient.delete(`/lessons/${id}`);
+};
+

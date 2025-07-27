@@ -1,40 +1,81 @@
+/* eslint-disable no-useless-catch */
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  getLevels,
+  createLevel,
+  updateLevel,
+  deleteLevel,
+} from "../services/api";
+import type { Level } from "../types";
+
+// Import komponen UI
 import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { Alert, AlertDescription } from "../components/ui/Alert";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { LevelModal } from "../components/LevelModal";
-import { getLevels, createLevel } from "../services/api";
-import type { Level } from "../types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
+
+// Import Ikon
 import { Plus, Edit, Trash2, BookOpen, GraduationCap } from "lucide-react";
 
 export const LevelsPage: React.FC = () => {
   const [levels, setLevels] = useState<Level[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
-  const [error, setError] = useState("");
+
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [levelToDelete, setLevelToDelete] = useState<Level | null>(null);
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchLevels();
-  }, []);
-
-  const fetchLevels = async () => {
+  const fetchLevels = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       const data = await getLevels();
-      setLevels(data.sort((a, b) => a.order - b.order));
+      setLevels(
+        (data || []).sort(
+          (a: { sequence: number }, b: { sequence: number }) =>
+            a.sequence - b.sequence
+        )
+      );
     } catch {
       setError("Failed to fetch levels");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchLevels();
+  }, [fetchLevels]);
 
   const handleAddLevel = () => {
     setModalMode("add");
@@ -48,140 +89,141 @@ export const LevelsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteLevel = async (id: string) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this level? This will also delete all associated materials."
-      )
-    ) {
-      try {
-        // await deleteLevel(id)
-        setLevels(levels.filter((item) => item.id !== id));
-      } catch {
-        setError("Failed to delete level");
-      }
-    }
-  };
-
   const handleSaveLevel = async (
     data: Omit<Level, "id" | "createdAt" | "updatedAt">
   ) => {
     try {
       if (modalMode === "add") {
-        const newLevel = await createLevel(data);
-        setLevels([...levels, newLevel].sort((a, b) => a.order - b.order));
+        await createLevel(data);
       } else if (selectedLevel) {
-        // const updatedLevel = await updateLevel(selectedLevel.id, data)
-        // setLevels(levels.map((item) => (item.id === selectedLevel.id ? updatedLevel : item)))
+        await updateLevel(selectedLevel.id, data);
       }
-    } catch {
-      throw new Error("Failed to save level");
+      await fetchLevels();
+    } catch (err) {
+      throw err;
     }
   };
 
-  const handleManageMaterials = (levelId: string) => {
-    navigate(`/levels/${levelId}/materials`);
+  const openDeleteDialog = (level: Level) => {
+    setLevelToDelete(level);
+    setIsDeleteDialogOpen(true);
   };
 
-  if (isLoading) {
+  const confirmDelete = async () => {
+    if (!levelToDelete) return;
+    try {
+      await deleteLevel(levelToDelete.id);
+      await fetchLevels(); // Muat ulang data setelah delete
+    } catch {
+      setError("Failed to delete level");
+    } finally {
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleManageLessons = (levelId: number) => {
+    navigate(`/levels/${levelId}/lessons`);
+  };
+
+  if (isLoading)
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-full">
         <LoadingSpinner />
       </div>
     );
-  }
+  if (error)
+    return (
+      <div className="flex items-center justify-center h-full text-red-600">
+        {error}
+      </div>
+    );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Levels & Materials
+          <h1 className="text-3xl font-bold tracking-tight">
+            Levels & Lessons
           </h1>
-          <p className="text-gray-600 mt-2">
-            Manage learning levels and their associated materials
+          <p className="text-gray-600 mt-1">
+            Manage learning levels and their associated materials.
           </p>
         </div>
         <Button onClick={handleAddLevel} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add New Level
+          <Plus className="h-4 w-4" /> Add New Level
         </Button>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {levels.length === 0 ? (
           <div className="col-span-full">
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <GraduationCap className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No levels created yet
-                </h3>
-                <p className="text-gray-500 text-center mb-4">
-                  Create your first learning level to start organizing your
-                  content
-                </p>
-                <Button onClick={handleAddLevel}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Level
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="text-center p-12 border-2 border-dashed rounded-lg">
+              <GraduationCap className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-lg font-medium">No levels found</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Get started by creating a new level.
+              </p>
+              <Button onClick={handleAddLevel} className="mt-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Level
+              </Button>
+            </div>
           </div>
         ) : (
           levels.map((level) => (
-            <Card key={level.id} className="hover:shadow-md transition-shadow">
+            <Card key={level.id} className="flex flex-col">
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{level.levelName}</CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {level.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditLevel(level)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteLevel(level.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <CardTitle className="text-lg">{level.name}</CardTitle>
+                  <TooltipProvider>
+                    <div className="flex items-center -mr-2 -mt-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditLevel(level)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Edit Level</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => openDeleteDialog(level)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete Level</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
                 </div>
+                <p className="text-sm text-gray-600 pt-1">
+                  {level.description}
+                </p>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>Order: {level.order}</span>
-                    <span>
-                      Created: {new Date(level.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <Button
-                    onClick={() => handleManageMaterials(level.id)}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Manage Materials
-                  </Button>
+              <CardContent className="flex-grow flex flex-col justify-end">
+                <div className="text-xs text-gray-500">
+                  Order: {level.sequence}
                 </div>
+                <Button
+                  onClick={() => handleManageLessons(level.id)}
+                  className="w-full mt-4"
+                  variant="outline"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" /> Manage Lessons
+                </Button>
               </CardContent>
             </Card>
           ))
@@ -195,6 +237,27 @@ export const LevelsPage: React.FC = () => {
         level={selectedLevel}
         mode={modalMode}
       />
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the level{" "}
+              <span className="font-bold">"{levelToDelete?.name}"</span>. This
+              action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

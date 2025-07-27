@@ -12,44 +12,47 @@ import {
   DialogFooter,
   DialogDescription,
 } from "./ui/Dialog";
-import type { Level } from "../types";
+import type { Lesson } from "../types";
 
-interface LevelModalProps {
+interface LessonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (
-    data: Omit<Level, "id" | "createdAt" | "updatedAt">
-  ) => Promise<void>;
-  level: Level | null;
+  onSave: (data: any) => Promise<void>;
+  lesson: Lesson | null;
   mode: "add" | "edit";
+  levelId: number;
 }
 
-export const LevelModal: React.FC<LevelModalProps> = ({
+export const LessonModal: React.FC<LessonModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  level,
+  lesson,
   mode,
+  levelId,
 }) => {
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    title: "",
+    content: "",
     sequence: 0,
+    levelId: levelId,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && mode === "edit" && level) {
+    if (isOpen && mode === "edit" && lesson) {
       setFormData({
-        name: level.name,
-        description: level.description,
-        sequence: level.sequence,
+        title: lesson.title,
+        content: lesson.content,
+        sequence: lesson.sequence,
+        levelId: lesson.levelId,
       });
     } else {
-      setFormData({ name: "", description: "", sequence: 0 });
+      setFormData({ title: "", content: "", sequence: 0, levelId: levelId });
     }
-  }, [isOpen, mode, level]);
+    setError(null);
+  }, [isOpen, mode, lesson, levelId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,13 +67,25 @@ export const LevelModal: React.FC<LevelModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setError(null);
+
     try {
-      await onSave(formData);
+      const dataToSend: any = {
+        title: formData.title,
+        content: formData.content,
+        sequence: formData.sequence,
+      };
+      if (mode === "add") {
+        dataToSend.level_id = formData.levelId;
+      }
+
+      // 3. Kirim data yang sudah diformat dengan benar
+      await onSave(dataToSend);
       onClose();
     } catch (err: any) {
-      const apiErrorMessage =
-        err.response?.data?.message || "An unexpected error occurred.";
-      setError(apiErrorMessage);
+      setError(
+        err.response?.data?.message || "An error occurred while saving."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -78,41 +93,38 @@ export const LevelModal: React.FC<LevelModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
-              {mode === "add" ? "Add New Level" : "Edit Level"}
+              {mode === "add" ? "Add New Lesson" : "Edit Lesson"}
             </DialogTitle>
             <DialogDescription>
-              Fill in the details for the learning level.
+              Fill in the lesson details. Content can be written in Markdown.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="space-y-2">
-              <Label htmlFor="name">Level Name</Label>
+              <Label htmlFor="title">Title</Label>
               <Input
-                id="name"
-                name="name"
-                value={formData.name}
+                id="title"
+                name="title"
+                value={formData.title}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="content">Content (Markdown supported)</Label>
               <Textarea
-                id="description"
-                name="description"
-                value={formData.description}
+                id="content"
+                name="content"
+                value={formData.content}
                 onChange={handleChange}
                 required
+                rows={10}
               />
             </div>
             <div className="space-y-2">

@@ -11,7 +11,7 @@ import { AdminLayout } from "../src/layouts/AdminLayout";
 import { DashboardPage } from "../src/pages/DashboardPage";
 import { VocabularyPage } from "./pages/VocabularyPage";
 import { LevelsPage } from "./pages/LevelsPage";
-import { MaterialsPage } from "./pages/MaterialsPage";
+import { LessonsPage } from "./pages/LessonsPage";
 import { CategoryPage } from "./pages/CategoryPage";
 
 export default function App() {
@@ -34,8 +34,8 @@ export default function App() {
             <Route path="categories" element={<CategoryPage />} />
             <Route path="levels" element={<LevelsPage />} />
             <Route
-              path="levels/:levelId/materials"
-              element={<MaterialsPage />}
+              path="levels/:levelId/lessons"
+              element={<LessonsPage />}
             />
           </Route>
         </Routes>
