@@ -11,11 +11,13 @@ import {
   LogOut,
   Menu,
   X,
+  Tags,
 } from "lucide-react";
 import { useState } from "react";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Categories", href: "/categories", icon: Tags },
   { name: "Vocabulary", href: "/vocabulary", icon: BookOpen },
   { name: "Levels & Materials", href: "/levels", icon: GraduationCap },
 ];
@@ -122,7 +124,6 @@ export const AdminLayout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      {/* PERBAIKAN 1: Tambahkan kelas di sini untuk mengatur layout vertikal dan mengisi sisa ruang */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
         <div className="sticky top-0 z-10 bg-white shadow-sm">
@@ -136,12 +137,10 @@ export const AdminLayout: React.FC = () => {
               <Menu className="h-5 w-5" />
             </Button>
             <div className="flex-1" />{" "}
-            {/* Ini untuk mendorong item lain jika ada */}
           </div>
         </div>
 
         {/* Page content */}
-        {/* PERBAIKAN 2: Tambahkan kelas di sini agar bisa di-scroll secara independen */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Outlet />
         </main>

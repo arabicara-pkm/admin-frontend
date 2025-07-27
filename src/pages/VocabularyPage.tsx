@@ -6,8 +6,9 @@ import {
   createVocabulary,
   updateVocabulary,
   deleteVocabulary,
+  getCategories,
 } from "../services/api";
-import type { Vocabulary } from "../types";
+import type { Category, Vocabulary } from "../types";
 
 // Import komponen UI dari shadcn/ui
 import { Button } from "../components/ui/Button";
@@ -53,6 +54,7 @@ import { Plus, Search, Edit, Trash2, BookText } from "lucide-react";
 
 export const VocabularyPage: React.FC = () => {
   const [vocabulary, setVocabulary] = useState<Vocabulary[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredVocabulary, setFilteredVocabulary] = useState<Vocabulary[]>(
     []
   );
@@ -75,38 +77,27 @@ export const VocabularyPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [vocabToDelete, setVocabToDelete] = useState<Vocabulary | null>(null);
 
-  // Daftar kategori (bisa juga diambil dari API jika dinamis)
-  const categories = [
-    "all",
-    "Greetings",
-    "Objects",
-    "Colors",
-    "Numbers",
-    "Family",
-    "Food",
-    "Animals",
-    "Verbs",
-    "Adjectives",
-  ];
-
-  const fetchVocabulary = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getVocabulary();
-      setVocabulary(data || []);
+      const [vocabData, categoriesData] = await Promise.all([
+        getVocabulary(),
+        getCategories(),
+      ]);
+      setVocabulary(vocabData || []);
+      setCategories(categoriesData || []);
     } catch (err) {
-      setError("Failed to fetch vocabulary data. Please try again.");
+      setError("Failed to fetch page data. Please try again.");
       console.error(err);
-      setVocabulary([]); // Juga atur ke array kosong jika terjadi error
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchVocabulary();
-  }, [fetchVocabulary]);
+    fetchData();
+  }, [fetchData]);
 
   // Logika filter di sisi klien
   useEffect(() => {
@@ -148,10 +139,9 @@ export const VocabularyPage: React.FC = () => {
         await updateVocabulary(selectedVocabulary.id, data);
       }
       setIsModalOpen(false);
-      await fetchVocabulary(); // Muat ulang data setelah berhasil menyimpan
+      await fetchData(); // Muat ulang data setelah berhasil menyimpan
     } catch (err) {
       console.error("Failed to save vocabulary:", err);
-      // Anda bisa menampilkan pesan error di dalam modal
       throw new Error("Failed to save vocabulary");
     }
   };
@@ -166,7 +156,7 @@ export const VocabularyPage: React.FC = () => {
     try {
       await deleteVocabulary(vocabToDelete.id);
       setVocabToDelete(null);
-      await fetchVocabulary(); // Muat ulang data setelah berhasil menghapus
+      await fetchData(); // Muat ulang data setelah berhasil menghapus
     } catch (err) {
       setError("Failed to delete vocabulary.");
       console.error(err);
@@ -222,9 +212,12 @@ export const VocabularyPage: React.FC = () => {
             <SelectValue placeholder="Filter by category" />
           </SelectTrigger>
           <SelectContent>
+            {/* Opsi "All" manual */}
+            <SelectItem value="all">All Categories</SelectItem>
+            {/* Mapping dari state categories */}
             {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
+              <SelectItem key={category.id} value={category.name}>
+                {category.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -326,6 +319,7 @@ export const VocabularyPage: React.FC = () => {
           onSave={handleSave}
           vocabulary={selectedVocabulary}
           mode={modalMode}
+          categories={categories}
         />
       )}
 

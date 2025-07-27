@@ -12,6 +12,7 @@ import { DashboardPage } from "../src/pages/DashboardPage";
 import { VocabularyPage } from "./pages/VocabularyPage";
 import { LevelsPage } from "./pages/LevelsPage";
 import { MaterialsPage } from "./pages/MaterialsPage";
+import { CategoryPage } from "./pages/CategoryPage";
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
           >
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="vocabulary" element={<VocabularyPage />} />
+            <Route path="categories" element={<CategoryPage />} />
             <Route path="levels" element={<LevelsPage />} />
             <Route
               path="levels/:levelId/materials"

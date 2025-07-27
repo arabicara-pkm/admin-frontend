@@ -1,48 +1,34 @@
-"use client";
-
-import type React from "react";
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+import { Label } from "./ui/Label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "../components/ui/Dialog";
-import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
-import { Label } from "../components/ui/Label";
+  DialogDescription,
+} from "./ui/Dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../components/ui/Select";
-import { Alert, AlertDescription } from "../components/ui/Alert";
-import type { Vocabulary } from "../types";
+} from "./ui/Select";
+import type { Vocabulary, Category } from "../types";
 
+// Definisikan tipe untuk props
 interface VocabularyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (
-    data: Omit<Vocabulary, "id" | "createdAt" | "updatedAt">
-  ) => Promise<void>;
-  vocabulary?: Vocabulary | null;
+  onSave: (data: any) => Promise<void>;
+  vocabulary: Vocabulary | null;
   mode: "add" | "edit";
+  categories: Category[]; // Prop baru untuk menerima daftar kategori
 }
-
-const categories = [
-  "Greetings",
-  "Objects",
-  "Colors",
-  "Numbers",
-  "Family",
-  "Food",
-  "Animals",
-  "Verbs",
-  "Adjectives",
-];
 
 export const VocabularyModal: React.FC<VocabularyModalProps> = ({
   isOpen,
@@ -50,113 +36,114 @@ export const VocabularyModal: React.FC<VocabularyModalProps> = ({
   onSave,
   vocabulary,
   mode,
+  categories,
 }) => {
+  // State untuk menampung data form
   const [formData, setFormData] = useState({
     arabicText: "",
     indonesianText: "",
-    category: "",
+    categoryId: "", // Kita akan menyimpan ID kategori
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Efek untuk mengisi form saat mode 'edit'
   useEffect(() => {
-    if (vocabulary && mode === "edit") {
+    if (mode === "edit" && vocabulary) {
       setFormData({
         arabicText: vocabulary.arabicText,
         indonesianText: vocabulary.indonesianText,
-        category: vocabulary.category,
+        categoryId: String(vocabulary.category.id), // Pastikan ID adalah string untuk Select
       });
     } else {
-      setFormData({
-        arabicText: "",
-        indonesianText: "",
-        category: "",
-      });
+      // Reset form untuk mode 'add'
+      setFormData({ arabicText: "", indonesianText: "", categoryId: "" });
     }
-    setError("");
-  }, [vocabulary, mode, isOpen]);
+  }, [isOpen, mode, vocabulary]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, categoryId: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
+    setIsSaving(true);
+    setError(null);
     try {
-      await onSave(formData);
+      // Pastikan categoryId diubah kembali ke number sebelum dikirim
+      const dataToSave = {
+        ...formData,
+        categoryId: Number(formData.categoryId),
+      };
+      await onSave(dataToSave);
       onClose();
-    } catch {
-      setError("Failed to save vocabulary");
+    } catch (err: any) {
+      setError(err.message || "An error occurred.");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "add" ? "Add New Vocabulary" : "Edit Vocabulary"}
-          </DialogTitle>
-        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>
+              {mode === "add" ? "Add New Vocabulary" : "Edit Vocabulary"}
+            </DialogTitle>
+            <DialogDescription>
+              Fill in the details for the vocabulary word.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="arabicText">Arabic Text</Label>
-            <Input
-              id="arabicText"
-              value={formData.arabicText}
-              onChange={(e) =>
-                setFormData({ ...formData, arabicText: e.target.value })
-              }
-              placeholder="Enter Arabic text"
-              required
-              disabled={isLoading}
-              className="text-right"
-              dir="rtl"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="indonesianText">Indonesian Text</Label>
-            <Input
-              id="indonesianText"
-              value={formData.indonesianText}
-              onChange={(e) =>
-                setFormData({ ...formData, indonesianText: e.target.value })
-              }
-              placeholder="Enter Indonesian translation"
-              required
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
-              }
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="arabicText">Arabic Text</Label>
+              <Input
+                id="arabicText"
+                name="arabicText"
+                value={formData.arabicText}
+                onChange={handleChange}
+                required
+                dir="rtl"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="indonesianText">Indonesian Text</Label>
+              <Input
+                id="indonesianText"
+                name="indonesianText"
+                value={formData.indonesianText}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                value={formData.categoryId}
+                onValueChange={handleCategoryChange}
+                required
+              >
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
 
           <DialogFooter>
@@ -164,16 +151,12 @@ export const VocabularyModal: React.FC<VocabularyModalProps> = ({
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={isLoading}
+              disabled={isSaving}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? "Saving..."
-                : mode === "add"
-                ? "Add Vocabulary"
-                : "Update Vocabulary"}
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
