@@ -24,12 +24,14 @@ export interface Category {
 }
 
 export interface Level {
-    id: number
-    name: string
-    description: string
-    sequence: number
-    createdAt: string
-    updatedAt: string
+    id: number;
+    name: string;
+    description: string;
+    sequence: number;
+    createdAt: string;
+    updatedAt: string;
+    exercises?: Exercise[];
+    lessons?: Lesson[];
 }
 
 export interface Lesson {
@@ -43,20 +45,18 @@ export interface Lesson {
 }
 
 export interface Exercise {
-    id: string
-    materialId: string
-    question: string
-    type: "multiple_choice" | "fill_blank" | "true_false"
-    choices: AnswerChoice[]
-    createdAt: string
-    updatedAt: string
+    id?: number;
+    question: string;
+    levelId?: number;
+    choices: AnswerChoice[];
+    // 'order' atau 'sequence' bisa ditambahkan jika perlu
 }
 
 export interface AnswerChoice {
-    id: string
-    text: string
-    isCorrect: boolean
-    order: number
+    id?: number;
+    text: string;
+    isCorrect: boolean;
+    exerciseId?: number;
 }
 
 export interface DashboardStats {
@@ -64,4 +64,21 @@ export interface DashboardStats {
     totalVocabulary: number
     totalMaterials: number
     totalLevels: number
+}
+
+export interface UserLevelProgress {
+    id: number;
+    userId: string;
+    levelId: number;
+    status: string; // e.g., 'NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'
+    score?: number;
+    completedAt?: string;
+}
+
+export interface UserLessonProgress {
+    id: number;
+    userId: string;
+    lessonId: number;
+    status: string; // e.g., 'LOCKED', 'UNLOCKED', 'COMPLETED'
+    completedAt?: string;
 }

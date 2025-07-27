@@ -34,7 +34,10 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     return MOCK_STATS
 }
 
-// categories
+// ===============================================
+// FUNGSI UNTUK ENDPOINT CATEGORY
+// ===============================================
+
 export const getCategories = async () => {
     const response = await apiClient.get('/categories');
     return response.data; // Sesuaikan dengan struktur respons API Anda
@@ -55,7 +58,10 @@ export const deleteCategory = async (id: number) => {
 };
 
 
-// vocabularies
+// ===============================================
+// FUNGSI UNTUK ENDPOINT VOCABULARY
+// ===============================================
+
 export const getVocabulary = async () => {
     const response = await apiClient.get('/vocabularies');
 
@@ -76,20 +82,29 @@ export const deleteVocabulary = async (id: number) => {
     await apiClient.delete(`/vocabularies/${id}`);
 };
 
-// levels
+// ===============================================
+// FUNGSI UNTUK ENDPOINT LEVEL
+// ===============================================
 export const getLevels = async () => {
     const response = await apiClient.get('/levels');
     return response.data.data;
 };
 
+export const getLevelWithExercises = async (levelId: number) => {
+    const response = await apiClient.get(`/levels/${levelId}`, {
+        params: { include: 'exercises' }
+    });
+    return response.data.data;
+};
+
 export const createLevel = async (data: any) => {
     const response = await apiClient.post('/levels', data);
-    return response.data;
+    return response.data.data;
 };
 
 export const updateLevel = async (id: number, data: any) => {
     const response = await apiClient.put(`/levels/${id}`, data);
-    return response.data;
+    return response.data.data;
 };
 
 export const deleteLevel = async (id: number) => {
@@ -97,7 +112,10 @@ export const deleteLevel = async (id: number) => {
 };
 
 
-// lessons
+// ===============================================
+// FUNGSI UNTUK ENDPOINT LESSON
+// ===============================================
+
 export const getLessonsByLevel = async (levelId: number) => {
     const response = await apiClient.get(`/levels/${levelId}`, {
         params: {
@@ -122,3 +140,23 @@ export const deleteLesson = async (id: number) => {
     await apiClient.delete(`/lessons/${id}`);
 };
 
+// ===============================================
+// FUNGSI UNTUK ENDPOINT EXERCISE
+// ===============================================
+
+// POST /exercises
+export const createExercise = async (data: any) => {
+    const response = await apiClient.post('/exercises', data);
+    return response.data.data;
+};
+
+// PUT /exercises/{id}
+export const updateExercise = async (id: number, data: any) => {
+    const response = await apiClient.put(`/exercises/${id}`, data);
+    return response.data.data;
+};
+
+// DELETE /exercises/{id}
+export const deleteExercise = async (id: number) => {
+    await apiClient.delete(`/exercises/${id}`);
+};

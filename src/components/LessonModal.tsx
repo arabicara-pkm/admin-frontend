@@ -79,7 +79,6 @@ export const LessonModal: React.FC<LessonModalProps> = ({
         dataToSend.level_id = formData.levelId;
       }
 
-      // 3. Kirim data yang sudah diformat dengan benar
       await onSave(dataToSend);
       onClose();
     } catch (err: any) {

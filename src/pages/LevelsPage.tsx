@@ -1,15 +1,20 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-useless-catch */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  getLevels,
+  getLevelWithExercises,
   createLevel,
   updateLevel,
   deleteLevel,
+  deleteExercise,
+  updateExercise,
+  createExercise,
+  getLevels,
 } from "../services/api";
-import type { Level } from "../types";
+import type { Exercise, Level } from "../types";
 
 // Import komponen UI
 import { Button } from "../components/ui/Button";
@@ -83,25 +88,51 @@ export const LevelsPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditLevel = (level: Level) => {
-    setModalMode("edit");
-    setSelectedLevel(level);
-    setIsModalOpen(true);
+  const handleEditLevel = async (level: Level) => {
+    try {
+      // Ambil data level lengkap dengan exercises-nya sebelum membuka modal
+      const fullLevelData = await getLevelWithExercises(level.id);
+      setSelectedLevel(fullLevelData);
+      setModalMode("edit");
+      setIsModalOpen(true);
+    } catch {
+      setError("Failed to fetch level details.");
+    }
   };
 
   const handleSaveLevel = async (
-    data: Omit<Level, "id" | "createdAt" | "updatedAt">
+    levelData: Omit<Level, "id" | "createdAt" | "updatedAt">,
+    exercisesData: Exercise[],
+    exercisesToDelete: number[]
   ) => {
-    try {
-      if (modalMode === "add") {
-        await createLevel(data);
-      } else if (selectedLevel) {
-        await updateLevel(selectedLevel.id, data);
-      }
-      await fetchLevels();
-    } catch (err) {
-      throw err;
+    let savedLevel = selectedLevel;
+
+    if (modalMode === "add") {
+      savedLevel = await createLevel(levelData);
+    } else if (selectedLevel) {
+      savedLevel = await updateLevel(selectedLevel.id, levelData);
     }
+
+    if (!savedLevel) throw new Error("Failed to save level data.");
+
+    await Promise.all(exercisesToDelete.map((exId) => deleteExercise(exId)));
+
+    await Promise.all(
+      exercisesData.map((ex) => {
+        const exercisePayload = {
+          question: ex.question,
+          type: "Pilihan Ganda", // Tipe selalu Pilihan Ganda
+          levelId: savedLevel.id,
+          choices: ex.choices.map(({ id, ...choice }) => choice), // Kirim answer choices tanpa id
+        };
+
+        return ex.id
+          ? updateExercise(ex.id, exercisePayload)
+          : createExercise(exercisePayload);
+      })
+    );
+
+    await fetchLevels(); // Muat ulang semua data di halaman
   };
 
   const openDeleteDialog = (level: Level) => {
