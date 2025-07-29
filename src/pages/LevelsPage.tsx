@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-useless-catch */
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -123,6 +121,7 @@ export const LevelsPage: React.FC = () => {
           question: ex.question,
           type: "Pilihan Ganda", // Tipe selalu Pilihan Ganda
           levelId: savedLevel.id,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           choices: ex.choices.map(({ id, ...choice }) => choice), // Kirim answer choices tanpa id
         };
 

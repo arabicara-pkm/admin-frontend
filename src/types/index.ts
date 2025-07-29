@@ -38,6 +38,7 @@ export interface Lesson {
     id: number;
     title: string;
     content: string;
+    voicePath?: string;
     sequence: number;
     levelId: number;
     createdAt: string;

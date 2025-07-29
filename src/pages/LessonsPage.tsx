@@ -2,7 +2,7 @@
 /* eslint-disable no-useless-catch */
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getLessonsByLevel,
@@ -41,7 +41,7 @@ import {
 } from "../components/ui/tooltip";
 
 // Import Ikon
-import { Plus, Edit, Trash2, ArrowLeft, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowLeft, FileText, Loader2, Volume2 } from "lucide-react";
 
 export const LessonsPage: React.FC = () => {
   const { levelId } = useParams<{ levelId: string }>();
@@ -56,6 +56,9 @@ export const LessonsPage: React.FC = () => {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null);
+
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchLessons = useCallback(async () => {
     if (!levelId) return;
@@ -79,6 +82,21 @@ export const LessonsPage: React.FC = () => {
   useEffect(() => {
     fetchLessons();
   }, [fetchLessons]);
+
+  const playAudio = (url: string, id: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    if (playingId === id) {
+      setPlayingId(null);
+      return;
+    }
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    setPlayingId(id);
+    audio.play().catch(() => setPlayingId(null));
+    audio.onended = () => setPlayingId(null);
+  };
 
   const handleSave = async (data: any) => {
     try {
@@ -166,6 +184,30 @@ export const LessonsPage: React.FC = () => {
                   </CardTitle>
                   <div className="-mr-2 -mt-2">
                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={!lesson.voicePath}
+                            onClick={() =>
+                              playAudio(
+                                lesson.voicePath!,
+                                `lesson-${lesson.id}`
+                              )
+                            }
+                          >
+                            {playingId === `lesson-${lesson.id}` ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Volume2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Play Audio</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
