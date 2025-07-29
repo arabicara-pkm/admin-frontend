@@ -10,8 +10,8 @@ export interface Vocabulary {
     arabicText: string
     indonesianText: string
     category: Category
-    arabicAudio?: string
-    indonesianAudio?: string
+    arabicVoicePath?: string
+    indonesianVoicePath?: string
     createdAt: string
     updatedAt: string
 }

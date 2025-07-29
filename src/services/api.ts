@@ -40,7 +40,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
 
 export const getCategories = async () => {
     const response = await apiClient.get('/categories');
-    return response.data; // Sesuaikan dengan struktur respons API Anda
+    return response.data.data; // Sesuaikan dengan struktur respons API Anda
 };
 
 export const createCategory = async (data: { name: string }) => {

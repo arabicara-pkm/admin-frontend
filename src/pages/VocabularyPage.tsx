@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   getVocabulary,
   createVocabulary,
@@ -9,8 +9,6 @@ import {
   getCategories,
 } from "../services/api";
 import type { Category, Vocabulary } from "../types";
-
-// Import komponen UI dari shadcn/ui
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import {
@@ -29,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/Table";
-import { Badge } from "../components/ui/badge"; // Komponen baru untuk kategori
+import { Badge } from "../components/ui/badge";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import { VocabularyModal } from "../components/VocabularyModal";
 import {
@@ -50,7 +48,15 @@ import {
 } from "../components/ui/tooltip"; // Komponen baru untuk hint
 
 // Import Ikon
-import { Plus, Search, Edit, Trash2, BookText } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  BookText,
+  Volume2,
+  Loader2,
+} from "lucide-react";
 
 export const VocabularyPage: React.FC = () => {
   const [vocabulary, setVocabulary] = useState<Vocabulary[]>([]);
@@ -77,6 +83,9 @@ export const VocabularyPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [vocabToDelete, setVocabToDelete] = useState<Vocabulary | null>(null);
 
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -94,6 +103,33 @@ export const VocabularyPage: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+
+  const playAudio = (url: string, id: string) => {
+    // Hentikan audio sebelumnya jika ada yang sedang berjalan
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    // Jika tombol yang sama diklik lagi, hentikan saja
+    if (playingId === id) {
+      setPlayingId(null);
+      return;
+    }
+
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    setPlayingId(id);
+
+    audio.play().catch(() => {
+      // Handle error jika audio gagal diputar
+      setPlayingId(null);
+    });
+
+    // Reset state saat audio selesai
+    audio.onended = () => {
+      setPlayingId(null);
+    };
+  };
 
   useEffect(() => {
     fetchData();
@@ -231,10 +267,11 @@ export const VocabularyPage: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[200px]">Arabic Text</TableHead>
-                  <TableHead>Indonesian Text</TableHead>
+                  <TableHead className="w-[200px]">Arabic</TableHead>
+                  <TableHead>Indonesian</TableHead>
+                  <TableHead>Arabic Audio</TableHead>
+                  <TableHead>Indonesian Audio</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -247,10 +284,46 @@ export const VocabularyPage: React.FC = () => {
                       </TableCell>
                       <TableCell>{vocab.indonesianText}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{vocab.category.name}</Badge>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={!vocab.arabicVoicePath}
+                          onClick={() =>
+                            playAudio(
+                              vocab.arabicVoicePath!,
+                              `arabic-${vocab.id}`
+                            )
+                          }
+                        >
+                          {playingId === `arabic-${vocab.id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Volume2 className="h-4 w-4" />
+                          )}
+                        </Button>
                       </TableCell>
-                      <TableCell className="text-gray-500">
-                        {new Date(vocab.createdAt).toLocaleDateString()}
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          disabled={!vocab.indonesianVoicePath}
+                          onClick={() =>
+                            playAudio(
+                              vocab.indonesianVoicePath!,
+                              `indonesian-${vocab.id}`
+                            )
+                          }
+                        >
+                          {playingId === `indonesian-${vocab.id}` ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Volume2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+
+                      <TableCell>
+                        <Badge variant="outline">{vocab.category.name}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">

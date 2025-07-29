@@ -15,6 +15,7 @@ import { Checkbox } from "./ui/checkbox";
 import { Card, CardContent, CardHeader } from "./ui/Card";
 import { PlusCircle, Trash2 } from "lucide-react";
 import type { Level, Exercise } from "../types";
+import { AxiosError } from "axios";
 
 interface LevelModalProps {
   isOpen: boolean;
@@ -118,11 +119,15 @@ export const LevelModal: React.FC<LevelModalProps> = ({
       await onSave(levelData, exercises, exercisesToDelete);
       onClose();
     } catch (err) {
-      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+      let errorMessage = "An unexpected error occurred."; // Pesan default akhir
 
-      if (err instanceof Error) {
+      if (err instanceof AxiosError && err.response) {
+        errorMessage =
+          err.response.data.message || "Failed to save due to a server error.";
+      } else if (err instanceof Error) {
         errorMessage = err.message;
       }
+
       setError(errorMessage);
     } finally {
       setIsSaving(false);
@@ -138,6 +143,8 @@ export const LevelModal: React.FC<LevelModalProps> = ({
               {mode === "add" ? "Add New Level" : "Edit Level"}
             </DialogTitle>
           </DialogHeader>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
           <div className="py-4 max-h-[75vh] overflow-y-auto pr-4 space-y-6">
             {/* Form Level */}
             <Card>
@@ -237,7 +244,6 @@ export const LevelModal: React.FC<LevelModalProps> = ({
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Exercise
               </Button>
             </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
           <DialogFooter>
             <Button
