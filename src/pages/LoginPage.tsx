@@ -5,7 +5,7 @@ import type React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import {
   Card,
@@ -44,8 +44,13 @@ export const LoginPage: React.FC = () => {
       // Navigasi ke dashboard setelah berhasil.
       // State akan diperbarui secara otomatis oleh listener di AuthContext.
       navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

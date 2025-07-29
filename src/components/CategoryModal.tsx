@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/button";
 import { Input } from "./ui/Input";
 import { Label } from "./ui/Label";
 import {
@@ -54,8 +54,13 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     try {
       await onSave({ name });
       onClose(); // Tutup modal setelah berhasil save
-    } catch (err: any) {
-      setError(err.message || "An error occurred while saving.");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

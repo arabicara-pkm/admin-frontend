@@ -17,7 +17,7 @@ import {
 import type { Exercise, Level } from "../types";
 
 // Import komponen UI
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,

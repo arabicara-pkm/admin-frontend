@@ -13,7 +13,7 @@ import {
 import type { Lesson } from "../types";
 
 // Import komponen UI
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
@@ -64,7 +64,11 @@ export const LessonsPage: React.FC = () => {
     try {
       const numericLevelId = parseInt(levelId, 10);
       const data = await getLessonsByLevel(numericLevelId);
-      setLessons((data || []).sort((a: { order: number; }, b: { order: number; }) => a.order - b.order));
+      setLessons(
+        (data || []).sort(
+          (a: { order: number }, b: { order: number }) => a.order - b.order
+        )
+      );
     } catch {
       setError("Failed to fetch lessons.");
     } finally {

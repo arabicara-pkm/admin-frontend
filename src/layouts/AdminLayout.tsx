@@ -3,7 +3,7 @@
 import type React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import {
   LayoutDashboard,
   BookOpen,

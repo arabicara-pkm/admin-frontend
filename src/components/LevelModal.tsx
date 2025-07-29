@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/button";
 import { Input } from "./ui/Input";
 import { Label } from "./ui/Label";
 import { Textarea } from "./ui/textarea";
@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
 } from "./ui/Dialog";
 import { Checkbox } from "./ui/checkbox";
 import { Card, CardContent, CardHeader } from "./ui/Card";
@@ -117,8 +117,13 @@ export const LevelModal: React.FC<LevelModalProps> = ({
       const levelData = { name, description, sequence };
       await onSave(levelData, exercises, exercisesToDelete);
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred during save.");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }

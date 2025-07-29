@@ -11,7 +11,7 @@ import {
 import type { Category, Vocabulary } from "../types";
 
 // Import komponen UI dari shadcn/ui
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/Input";
 import {
   Select,

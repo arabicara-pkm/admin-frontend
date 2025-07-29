@@ -11,7 +11,7 @@ import {
 import type { Category } from "../types";
 
 // Import komponen UI
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import {
   Card,
   CardContent,
@@ -70,8 +70,13 @@ export const CategoryPage: React.FC = () => {
     try {
       const data = await getCategories();
       setCategories(data || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch categories.");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -112,8 +117,13 @@ export const CategoryPage: React.FC = () => {
     try {
       await deleteCategory(categoryToDelete.id);
       await fetchCategories();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete category.");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsDeleteDialogOpen(false);
     }

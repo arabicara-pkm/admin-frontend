@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/button";
 import { Input } from "./ui/Input";
 import { Label } from "./ui/Label";
 import {
@@ -82,8 +82,13 @@ export const VocabularyModal: React.FC<VocabularyModalProps> = ({
       };
       await onSave(dataToSave);
       onClose();
-    } catch (err: any) {
-      setError(err.message || "An error occurred.");
+    } catch (err) {
+      let errorMessage = "Terjadi kesalahan saat menyimpan."; // Siapkan pesan default
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }
