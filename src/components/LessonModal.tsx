@@ -76,7 +76,7 @@ export const LessonModal: React.FC<LessonModalProps> = ({
         sequence: formData.sequence,
       };
       if (mode === "add") {
-        dataToSend.level_id = formData.levelId;
+        dataToSend.levelId = formData.levelId;
       }
 
       await onSave(dataToSend);
