@@ -4,7 +4,7 @@ import axios from 'axios';
 import { supabase } from '../lib/supabaseClient'; // Asumsi client Supabase Anda ada di sini
 
 const apiClient = axios.create({
-    baseURL: 'https://backend-arabicara.up.railway.app/api/v1', // Base URL dari API Anda
+    baseURL: 'https://backend-arabicaraa.up.railway.app/api/v1', // Base URL dari API Anda
     headers: {
         'Content-Type': 'application/json',
     },
