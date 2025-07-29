@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { DashboardStats } from "../types"
 import axios from 'axios';
 import { supabase } from '../lib/supabaseClient'; // Asumsi client Supabase Anda ada di sini
+import type { DashboardStats } from '@/types';
 
 const apiClient = axios.create({
     baseURL: 'https://backend-arabicaraa.up.railway.app/api/v1', // Base URL dari API Anda
@@ -22,17 +22,32 @@ apiClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-const MOCK_STATS: DashboardStats = {
-    totalUsers: 150,
-    totalVocabulary: 500,
-    totalMaterials: 25,
-    totalLevels: 5,
-}
 
+export const getLessons = async () => {
+    const response = await apiClient.get('/lessons');
+    return response.data;
+};
+
+
+// Fungsi utama untuk mengambil semua data statistik secara bersamaan
 export const getDashboardStats = async (): Promise<DashboardStats> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    return MOCK_STATS
-}
+    // Panggil semua API secara paralel untuk efisiensi
+    const [categories, vocabularies, lessons, levels] = await Promise.all([
+        getCategories(),
+        getVocabulary(),
+        getLessons(),
+        getLevels()
+    ]);
+
+    // Kembalikan objek yang berisi jumlah dari setiap data
+    return {
+        totalCategories: categories?.length || 0,
+        totalVocabulary: vocabularies?.length || 0,
+        totalLessons: lessons?.length || 0,
+        totalLevels: levels?.length || 0,
+    };
+};
+
 
 // ===============================================
 // FUNGSI UNTUK ENDPOINT CATEGORY

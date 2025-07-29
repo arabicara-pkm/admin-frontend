@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-// import { getDashboardStats } from "../services/api"; // API Anda yang sudah ada
+import { getDashboardStats } from "../services/api";
 import type { DashboardStats } from "../types";
 import {
   Card,
@@ -11,29 +11,13 @@ import {
 } from "../components/ui/Card";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
 import {
-  Users,
   BookOpen,
   FileText,
   GraduationCap,
   ChevronRight,
-  PlusCircle,
+  Tags,
 } from "lucide-react";
-import { Link } from "react-router-dom"; // Penting untuk navigasi
-
-// Placeholder untuk API, ganti dengan API asli Anda jika sudah ada
-const getDashboardData = async (): Promise<DashboardStats> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        totalUsers: 125,
-        totalVocabulary: 850,
-        totalMaterials: 72,
-        totalLevels: 12,
-        // Anda bisa menambahkan data lain di sini, misal: recentActivities
-      });
-    }, 1000);
-  });
-};
+import { Link } from "react-router-dom";
 
 export const DashboardPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -45,8 +29,8 @@ export const DashboardPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // Ganti getDashboardData dengan getDashboardStats asli Anda
-        const data = await getDashboardData();
+        // ✅ Ganti placeholder dengan panggilan API asli
+        const data = await getDashboardStats();
         setStats(data);
       } catch (error) {
         console.error("Failed to fetch dashboard stats:", error);
@@ -59,54 +43,48 @@ export const DashboardPage: React.FC = () => {
     fetchStats();
   }, []);
 
-  // Konfigurasi untuk kartu statistik agar lebih mudah dikelola
   const statCards = [
     {
-      title: "Total Users",
-      value: stats?.totalUsers,
-      icon: Users,
-      color: "text-indigo-600",
-      bgColor: "bg-indigo-50",
+      title: "Total Categories",
+      value: stats?.totalCategories,
+      icon: Tags,
+      link: "/categories",
     },
     {
-      title: "Vocabulary Words",
+      title: "Total Vocabulary",
       value: stats?.totalVocabulary,
       icon: BookOpen,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      link: "/vocabulary",
     },
     {
-      title: "Learning Materials",
-      value: stats?.totalMaterials,
+      title: "Total Lessons",
+      value: stats?.totalLessons,
       icon: FileText,
-      color: "text-amber-600",
-      bgColor: "bg-amber-50",
+      link: "/lessons",
     },
     {
-      title: "Learning Levels",
+      title: "Total Levels",
       value: stats?.totalLevels,
       icon: GraduationCap,
-      color: "text-rose-600",
-      bgColor: "bg-rose-50",
+      link: "/levels",
     },
   ];
 
-  // Konfigurasi untuk "Quick Actions" agar mudah dikelola dan di-link
   const quickActions = [
     {
-      title: "Add New Vocabulary",
-      description: "Add a new Arabic word",
-      path: "/vocabulary/new",
-      icon: PlusCircle,
+      title: "Manage Vocabulary",
+      description: "Add or edit words",
+      path: "/vocabulary",
+      icon: BookOpen,
     },
     {
-      title: "Create New Material",
-      description: "Add new lessons or exercises",
-      path: "/materials/new",
-      icon: PlusCircle,
+      title: "Manage Categories",
+      description: "Organize word categories",
+      path: "/categories",
+      icon: Tags,
     },
     {
-      title: "Manage All Levels",
+      title: "Manage Levels",
       description: "Organize learning progression",
       path: "/levels",
       icon: ChevronRight,
@@ -131,7 +109,6 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-8 p-4 md:p-6">
-      {/* 1. Header Halaman */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Dashboard
@@ -141,29 +118,25 @@ export const DashboardPage: React.FC = () => {
         </p>
       </div>
 
-      {/* 2. Kartu Statistik (Sudah responsif) */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card
-              key={card.title}
-              className="transition-all hover:shadow-md hover:-translate-y-1"
-            >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  {card.title}
-                </CardTitle>
-                <div className={`rounded-lg p-2 ${card.bgColor}`}>
-                  <Icon className={`h-5 w-5 ${card.color}`} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">
-                  {(card.value || 0).toLocaleString("en-US")}
-                </div>
-              </CardContent>
-            </Card>
+            <Link to={card.link} key={card.title}>
+              <Card className="transition-all hover:shadow-lg hover:-translate-y-1">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-500">
+                    {card.title}
+                  </CardTitle>
+                  <Icon className="h-5 w-5 text-gray-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {(card.value || 0).toLocaleString("en-US")}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           );
         })}
       </div>
@@ -177,19 +150,8 @@ export const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-500">
-              This section will show recent updates.
+              Feature to show recent updates is coming soon.
             </p>
-            {/* TODO: Ganti dengan data dari API. Contoh:
-            <ul className="space-y-4">
-              {recentActivities.map(activity => (
-                <li key={activity.id} className="flex items-center space-x-3">
-                  <div className="p-2 bg-gray-100 rounded-full"><Users className="h-4 w-4 text-gray-600" /></div>
-                  <p className="text-sm text-gray-700">{activity.description}</p>
-                  <p className="ml-auto text-xs text-gray-400">{activity.time}</p>
-                </li>
-              ))}
-            </ul>
-            */}
           </CardContent>
         </Card>
 

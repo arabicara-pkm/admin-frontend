@@ -61,10 +61,10 @@ export interface AnswerChoice {
 }
 
 export interface DashboardStats {
-    totalUsers: number
-    totalVocabulary: number
-    totalMaterials: number
-    totalLevels: number
+    totalCategories: number;
+    totalVocabulary: number;
+    totalLessons: number;
+    totalLevels: number;
 }
 
 export interface UserLevelProgress {
