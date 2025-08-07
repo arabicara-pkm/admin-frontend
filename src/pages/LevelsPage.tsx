@@ -56,6 +56,9 @@ export const LevelsPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [levelToDelete, setLevelToDelete] = useState<Level | null>(null);
 
+  const maxSequence = Math.max(0, ...levels.map((level) => level.sequence));
+  const nextSequence = maxSequence + 1;
+
   const navigate = useNavigate();
 
   const fetchLevels = useCallback(async () => {
@@ -266,6 +269,7 @@ export const LevelsPage: React.FC = () => {
         onSave={handleSaveLevel}
         level={selectedLevel}
         mode={modalMode}
+        defaultSequence={nextSequence}
       />
       <AlertDialog
         open={isDeleteDialogOpen}

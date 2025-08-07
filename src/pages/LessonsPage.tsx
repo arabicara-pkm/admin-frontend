@@ -41,7 +41,15 @@ import {
 } from "../components/ui/tooltip";
 
 // Import Ikon
-import { Plus, Edit, Trash2, ArrowLeft, FileText, Loader2, Volume2 } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ArrowLeft,
+  FileText,
+  Loader2,
+  Volume2,
+} from "lucide-react";
 
 export const LessonsPage: React.FC = () => {
   const { levelId } = useParams<{ levelId: string }>();
@@ -136,6 +144,9 @@ export const LessonsPage: React.FC = () => {
         {error}
       </div>
     );
+
+  const maxSequence = Math.max(0, ...lessons.map((lesson) => lesson.sequence));
+  const nextSequence = maxSequence + 1;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -266,6 +277,7 @@ export const LessonsPage: React.FC = () => {
           lesson={selectedLesson}
           mode={modalMode}
           levelId={parseInt(levelId, 10)}
+          defaultSequence={nextSequence}
         />
       )}
       <AlertDialog

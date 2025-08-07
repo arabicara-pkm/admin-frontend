@@ -20,7 +20,6 @@ import { AxiosError } from "axios";
 interface LevelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  // onSave akan menangani logika penyimpanan yang kompleks
   onSave: (
     levelData: any,
     exercisesData: Exercise[],
@@ -28,6 +27,7 @@ interface LevelModalProps {
   ) => Promise<void>;
   level: Level | null;
   mode: "add" | "edit";
+  defaultSequence?: number;
 }
 
 const initialExerciseState: Exercise = {
@@ -46,6 +46,7 @@ export const LevelModal: React.FC<LevelModalProps> = ({
   onSave,
   level,
   mode,
+  defaultSequence,
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -56,21 +57,24 @@ export const LevelModal: React.FC<LevelModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && mode === "edit" && level) {
-      setName(level.name);
-      setDescription(level.description);
-      setSequence(level.sequence);
-      setExercises(level.exercises || []);
-    } else {
-      // Reset form untuk mode 'add'
-      setName("");
-      setDescription("");
-      setSequence(0);
-      setExercises([initialExerciseState]);
+    if (isOpen) {
+      if (mode === "edit" && level) {
+        // Mode Edit: Gunakan data dari level yang dipilih
+        setName(level.name);
+        setDescription(level.description);
+        setSequence(level.sequence);
+        setExercises(level.exercises || []);
+      } else {
+        // ✅ Mode Add: Gunakan prop defaultSequence untuk nilai awal
+        setName("");
+        setDescription("");
+        setSequence(defaultSequence || 1); // Fallback ke 1 jika prop tidak ada
+        setExercises([initialExerciseState]);
+      }
+      setExercisesToDelete([]);
+      setError(null);
     }
-    setExercisesToDelete([]); // Selalu reset daftar exercise yang akan dihapus
-    setError(null);
-  }, [isOpen, mode, level]);
+  }, [isOpen, mode, level, defaultSequence]);
 
   // Handler untuk mengubah data Exercise
   const handleExerciseChange = (exIndex: number, value: string) => {

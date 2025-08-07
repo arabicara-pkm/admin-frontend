@@ -21,6 +21,7 @@ interface LessonModalProps {
   lesson: Lesson | null;
   mode: "add" | "edit";
   levelId: number;
+  defaultSequence?: number;
 }
 
 export const LessonModal: React.FC<LessonModalProps> = ({
@@ -30,6 +31,7 @@ export const LessonModal: React.FC<LessonModalProps> = ({
   lesson,
   mode,
   levelId,
+  defaultSequence,
 }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -41,18 +43,25 @@ export const LessonModal: React.FC<LessonModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && mode === "edit" && lesson) {
-      setFormData({
-        title: lesson.title,
-        content: lesson.content,
-        sequence: lesson.sequence,
-        levelId: lesson.levelId,
-      });
-    } else {
-      setFormData({ title: "", content: "", sequence: 0, levelId: levelId });
+    if (isOpen) {
+      if (mode === "edit" && lesson) {
+        setFormData({
+          title: lesson.title,
+          content: lesson.content,
+          sequence: lesson.sequence,
+          levelId: lesson.levelId,
+        });
+      } else {
+        setFormData({
+          title: "",
+          content: "",
+          sequence: defaultSequence || 1, // Fallback ke 1 jika prop tidak ada
+          levelId: levelId,
+        });
+      }
+      setError(null);
     }
-    setError(null);
-  }, [isOpen, mode, lesson, levelId]);
+  }, [isOpen, mode, lesson, levelId, defaultSequence]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
