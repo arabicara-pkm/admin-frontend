@@ -103,7 +103,12 @@ export const LevelModal: React.FC<LevelModalProps> = ({
     setExercises(newExercises);
   };
 
-  const addExercise = () => setExercises([...exercises, initialExerciseState]);
+  const addExercise = () => {
+  const newExercise = JSON.parse(JSON.stringify(initialExerciseState));
+  
+  setExercises([...exercises, newExercise]);
+};
+
 
   const removeExercise = (exIndex: number) => {
     const exerciseToRemove = exercises[exIndex];
