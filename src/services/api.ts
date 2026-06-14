@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient'; // Asumsi client Supabase Anda
 import type { DashboardStats } from '@/types';
 
 const apiClient = axios.create({
-    baseURL: 'https://backend-arabicaraa.up.railway.app/api/v1', // Base URL dari API Anda
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://backend-arabicara.onrender.com/api/v1',
     headers: {
         'Content-Type': 'application/json',
     },
