@@ -166,11 +166,17 @@ export const VocabularyPage: React.FC = () => {
   };
 
   const handleSave = async (
-    data: Omit<Vocabulary, "id" | "createdAt" | "updatedAt">
+    data:
+      | { arabicText: string; indonesianText: string; categoryId: number }
+      | Array<{ arabicText: string; indonesianText: string; categoryId: number }>
   ) => {
     try {
       if (modalMode === "add") {
-        await createVocabulary(data);
+        if (Array.isArray(data)) {
+          await Promise.all(data.map((item) => createVocabulary(item)));
+        } else {
+          await createVocabulary(data);
+        }
       } else if (selectedVocabulary) {
         await updateVocabulary(selectedVocabulary.id, data);
       }
